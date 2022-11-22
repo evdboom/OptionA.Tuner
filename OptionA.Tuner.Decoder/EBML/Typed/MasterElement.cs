@@ -10,7 +10,7 @@
         public void AddChild(IEbmlElement child) 
         {
             child.Parent = this;
-            Value.Add(child);
+            Value!.Add(child);
         }
     }
 }

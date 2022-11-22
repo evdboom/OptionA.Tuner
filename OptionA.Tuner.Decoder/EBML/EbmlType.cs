@@ -5,6 +5,8 @@
         UnsignedInteger,
         SignedInteger,
         String,
-        Master
+        Master,
+        Header,
+        Utf8
     }
 }

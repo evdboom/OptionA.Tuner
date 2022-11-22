@@ -4,5 +4,7 @@
     {
         public IEbmlElement? Parent { get; set; }
         public ulong Tag { get; }
+        public long StartsAt { get; }
+        public ulong? Length { get; }
     }
 }

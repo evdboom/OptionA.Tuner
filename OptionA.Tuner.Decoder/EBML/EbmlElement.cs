@@ -5,6 +5,7 @@
         public IEbmlElement? Parent { get; set; }
         public ulong Tag { get; set; }
         public ulong? Length { get; set; }
+        public long StartsAt { get; set; }
         public Data? Value { get; set; }
     }
 }
