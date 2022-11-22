@@ -20,4 +20,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.0" PrivateAssets="all" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\OptionA.Tuner.Decoder\OptionA.Tuner.Decoder.csproj" />
+  </ItemGroup>
+
 </Project>

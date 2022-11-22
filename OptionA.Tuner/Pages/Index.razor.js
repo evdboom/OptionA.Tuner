@@ -1,6 +1,12 @@
 ﻿export const getRecorder = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const recorder = new MediaRecorder(stream);
+    const constraints = {
+        audio: true
+    };
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    const options = {
+        mimeType: 'audio/webm;codecs="opus"'
+    };
+    const recorder = new MediaRecorder(stream, options);
     recorder.ondataavailable = onData;
     return recorder;
 }

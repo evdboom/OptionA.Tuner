@@ -1,4 +1,7 @@
-﻿using System.Runtime.InteropServices.JavaScript;
+﻿using Microsoft.AspNetCore.Components;
+using OptionA.Tuner.Decoder.Opus;
+using OptionA.Tuner.Decoder.WebM;
+using System.Runtime.InteropServices.JavaScript;
 using System.Runtime.Versioning;
 
 namespace OptionA.Tuner.Pages
@@ -8,7 +11,10 @@ namespace OptionA.Tuner.Pages
     {
         private JSObject? _recorder;
 
-        private static event EventHandler<string>? OnData;
+        private static event EventHandler<byte[]>? OnData;
+
+        [Inject]
+        private IWebMDecoder Decoder { get; set; } = null!;
 
         [JSImport("getRecorder", "Index")]
         internal static partial Task<JSObject> GetRecorder();
@@ -18,9 +24,8 @@ namespace OptionA.Tuner.Pages
         internal static partial void StopRecorder(JSObject recorder);
         [JSExport]
         internal static void ProcessSlice(byte[] slice)
-        {
-            var avg = slice.Average(b => b);
-            OnData?.Invoke(null, $"{avg}");
+        {            
+            OnData?.Invoke(null, slice);
         }
 
         private string _value = string.Empty;
@@ -49,13 +54,12 @@ namespace OptionA.Tuner.Pages
         {
             await JSHost.ImportAsync("Index", "../Pages/Index.razor.js");
             _recorder = await GetRecorder();
-            OnData += Index_OnData;
+            OnData += OnRecord;
         }
 
-        private void Index_OnData(object? sender, string e)
+        private void OnRecord(object? sender, byte[] slice)
         {
-            _value = e;
-            StateHasChanged();
+            Decoder.Decode(slice);
         }
     }
 }
