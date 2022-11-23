@@ -2,6 +2,6 @@
 {
     public interface IOpusDecoder
     {
-        void DecodeStream(Stream stream);
+        void DecodeStream(byte[] bytes);
     }
 }

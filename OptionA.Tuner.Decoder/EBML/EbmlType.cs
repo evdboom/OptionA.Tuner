@@ -7,6 +7,9 @@
         String,
         Master,
         Header,
-        Utf8
+        Utf8,
+        Binary,
+        Float,
+        Date
     }
 }

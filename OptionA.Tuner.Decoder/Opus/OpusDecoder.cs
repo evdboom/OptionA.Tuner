@@ -4,10 +4,9 @@ namespace OptionA.Tuner.Decoder.Opus
 {
     public class OpusDecoder : IOpusDecoder
     {
-        public void DecodeStream(Stream stream)
+        public void DecodeStream(byte[] bytes)
         {
-
-            //128 64 32 16 8 4 2 1
+            using (var stream = new MemoryStream(bytes))
             using (var reader = new BinaryReader(stream, System.Text.Encoding.Default, true))
             {
                 var toc = reader.ReadByte();

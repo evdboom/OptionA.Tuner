@@ -13,7 +13,7 @@ namespace OptionA.Tuner.Decoder.Extensions
         {
             foreach(var child in schema.ChildNodes)
             {
-                if (child is XmlElement xmlElement && xmlElement.GetAttribute("id") == $"0x{tag}")
+                if (child is XmlElement xmlElement && xmlElement.GetAttribute("id") == $"0x{tag:X}")
                 {
                     return xmlElement;
                 }                

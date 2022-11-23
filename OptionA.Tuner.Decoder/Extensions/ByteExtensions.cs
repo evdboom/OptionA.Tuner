@@ -11,5 +11,12 @@
         {
             return GetMostSignificantBits((byte)(source << 8 - bitCount), bitCount);
         }
+
+        public static string ToBinaryString(this byte source) 
+        {
+            return Convert
+                .ToString(source, 2)
+                .PadLeft(8, '0');
+        }
     }
 }

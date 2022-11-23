@@ -8,6 +8,7 @@ namespace OptionA.Tuner.Decoder.WebM
 {
     public interface IWebMDecoder
     {
+        event EventHandler<string> ReadStepPerformed;
         void Decode(byte[] data);
     }
 }

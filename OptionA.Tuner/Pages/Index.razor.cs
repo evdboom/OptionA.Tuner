@@ -28,7 +28,7 @@ namespace OptionA.Tuner.Pages
             OnData?.Invoke(null, slice);
         }
 
-        private string _value = string.Empty;
+        private List<string> _records = new();
 
         private bool _started = false;
         private void ClickMe()
@@ -55,6 +55,13 @@ namespace OptionA.Tuner.Pages
             await JSHost.ImportAsync("Index", "../Pages/Index.razor.js");
             _recorder = await GetRecorder();
             OnData += OnRecord;
+            Decoder.ReadStepPerformed += GotMessage;
+        }
+
+        private void GotMessage(object? sender, string e)
+        {
+            _records.Add(e);
+            StateHasChanged();
         }
 
         private void OnRecord(object? sender, byte[] slice)
