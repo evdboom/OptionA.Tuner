@@ -8,25 +8,34 @@ export const initialize = async () => {
     dotNetClass = exports.OptionA.Tuner.Pages.Index;
 }
 
-export const startRecorder = async () => {
+export const startRecorder = async (sampleRate, fftSize, highestFrequency) => {
     if (!dotNetClass) {
         return ".Net not initialized yet!";
     }
     stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const audioCtx = new AudioContext({ sampleRate: 48000 });
-    const analyser = new AnalyserNode(audioCtx, { fftSize: 4096 });
+    const audioCtx = new AudioContext({ sampleRate: sampleRate });
+    const analyser = new AnalyserNode(audioCtx, { fftSize: fftSize });
     audioCtx
         .createMediaStreamSource(stream)
         .connect(analyser);
-    const bufferSize = analyser.frequencyBinCount;
+    const bufferSize = highestFrequency === 0
+        ? analyser.frequencyBinCount
+        : getHighest(sampleRate, analyser.frequencyBinCount, highestFrequency);
     interval = setInterval(() => {
-        const data = new Uint8Array(bufferSize);
-        analyser.getByteFrequencyData(data);        
-        draw("canvas1", data, bufferSize);
-        const data2 = new Uint8Array(bufferSize * 2)
-        analyser.getByteTimeDomainData(data2);
-        draw("canvas2", data2, bufferSize * 2)
+        const data = new Float32Array(bufferSize);
+        analyser.getFloatFrequencyData(data);
+        draw("canvas1", data, bufferSize, false);
+        const data2 = new Float32Array(fftSize)
+        analyser.getFloatTimeDomainData(data2);
+        draw("canvas2", data2, fftSize, true)
     }, 33)
+}
+
+const getHighest = (sampleRate, binCount, frequency) => {
+    const max = sampleRate / 2;
+    const slice = max / binCount;
+
+    return frequency / slice;
 }
 
 export const stopRecorder = () => {
@@ -42,23 +51,34 @@ export const stopRecorder = () => {
     }    
 }
 
-const draw = (canvasId, values, bufferSize) => {
+const draw = (canvasId, values, bufferSize, timeMode) => {
     const canvas = document.getElementById(canvasId);
     const width = canvas.width;
     const height = canvas.height;
     const context = canvas.getContext("2d");
     context.clearRect(0, 0, width, height);
+
     const step = width / bufferSize;
-    let x = step;
+    let x = 0;
     context.beginPath();
-    let value = values[0] / 128.0;
-    let y = (value * height) / 2;
-    context.moveTo(0, y);
+    let y = timeMode
+        ? valueTime(values[0], height)
+        : valueFrequency(values[0], height); 
+    context.moveTo(x, y);
     for (let i = 1; i < bufferSize; i++) {
-        value = values[i] / 128.0;
-        y = (value * height) / 2;
-        context.lineTo(x, y);
-        x += step;
+        x += step;        
+        y = timeMode
+            ? valueTime(values[i], height)
+            : valueFrequency(values[i], height);
+        context.lineTo(x, y);        
     }
     context.stroke();
+}
+
+const valueTime = (value, height) => {    
+    return (height / 2) + (value * height);
+}
+
+const valueFrequency = (value, height) => {
+    return value + 140;
 }

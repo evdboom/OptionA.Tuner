@@ -11,7 +11,7 @@ namespace OptionA.Tuner.Pages
         [JSImport("initialize", "Index")]
         internal static partial Task Initialize();
         [JSImport("startRecorder", "Index")]
-        internal static partial Task StartRecorder();
+        internal static partial Task StartRecorder(double sampleRate, int fftSize, int highestFrequency);
         [JSImport("stopRecorder", "Index")]
         internal static partial void StopRecorder();
         [JSExport]
@@ -19,6 +19,10 @@ namespace OptionA.Tuner.Pages
         {
             DataReceived?.Invoke(null, (sampleRate, slice));
         }
+
+        private double _sampleRate = 48000;
+        private int _fftSize = 2048;
+        private int _highestFrequency = 0;
 
         private byte[]? _slice;
 
@@ -31,7 +35,7 @@ namespace OptionA.Tuner.Pages
             }
             else
             {
-                await StartRecorder();
+                await StartRecorder(_sampleRate, _fftSize, _highestFrequency);
             }
 
             _started = !_started;
