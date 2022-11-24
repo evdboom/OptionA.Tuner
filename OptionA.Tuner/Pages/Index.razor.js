@@ -13,19 +13,19 @@ export const startRecorder = async () => {
         return ".Net not initialized yet!";
     }
     stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const audioCtx = new AudioContext({ sampleRate: 3000 });
+    const audioCtx = new AudioContext({ sampleRate: 48000 });
     const analyser = new AnalyserNode(audioCtx, { fftSize: 4096 });
     audioCtx
         .createMediaStreamSource(stream)
         .connect(analyser);
     const bufferSize = analyser.frequencyBinCount;
     interval = setInterval(() => {
-        const data = new Uint8Array(350);
+        const data = new Uint8Array(bufferSize);
         analyser.getByteFrequencyData(data);        
-        draw("canvas1", data, 350);
-        const data2 = new Uint8Array(4096)
+        draw("canvas1", data, bufferSize);
+        const data2 = new Uint8Array(bufferSize * 2)
         analyser.getByteTimeDomainData(data2);
-        draw("canvas2", data2, 4096)
+        draw("canvas2", data2, bufferSize * 2)
     }, 33)
 }
 
