@@ -20,8 +20,8 @@ namespace OptionA.Tuner.Pages
             DataReceived?.Invoke(null, (sampleRate, slice));
         }
 
-        private double _sampleRate = 48000;
-        private int _fftSize = 2048;
+        private double _sampleRate = 16000;
+        private int _fftSize = 8192;
         private int _highestFrequency = 0;
 
         private byte[]? _slice;

@@ -12,9 +12,15 @@ export const startRecorder = async (sampleRate, fftSize, highestFrequency) => {
     if (!dotNetClass) {
         return ".Net not initialized yet!";
     }
-    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const audioCtx = new AudioContext({ sampleRate: sampleRate });
-    const analyser = new AnalyserNode(audioCtx, { fftSize: fftSize });
+    const constraint = {
+        audio: {
+            echoCancellation: true,
+            noiseSuppression: false,
+        }
+    };
+    stream = await navigator.mediaDevices.getUserMedia(constraint);
+    const audioCtx = new AudioContext({ sampleRate: sampleRate, latencyHint: "playback" });
+    const analyser = new AnalyserNode(audioCtx, { fftSize: fftSize, smoothingTimeConstant: 0 });
     audioCtx
         .createMediaStreamSource(stream)
         .connect(analyser);
