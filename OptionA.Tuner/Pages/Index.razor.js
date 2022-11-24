@@ -1,29 +1,64 @@
-﻿export const getRecorder = async () => {
-    const constraints = {
-        audio: true
-    };
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    const options = {
-        mimeType: 'audio/webm;codecs="opus"'
-    };
-    const recorder = new MediaRecorder(stream, options);
-    recorder.ondataavailable = onData;
-    return recorder;
-}
+﻿let dotNetClass;
+let stream;
+let interval;
 
-export const startRecorder = (recorder, sliceTime) => {
-    recorder.start(sliceTime);
-}
-
-export const stopRecorder = (recorder) => {
-    recorder.stop();
-}
-
-export const onData = async (event) => {    
+export const initialize = async () => {
     const { getAssemblyExports } = await globalThis.getDotnetRuntime(0);
-    var exports = await getAssemblyExports("OptionA.Tuner.dll"); 
-    const buffer = await event.data.arrayBuffer();
-    const stream = new Uint8Array(buffer);    
-    console.log(event);
-    exports.OptionA.Tuner.Pages.Index.ProcessSlice(stream);
+    var exports = await getAssemblyExports("OptionA.Tuner.dll");
+    dotNetClass = exports.OptionA.Tuner.Pages.Index;
+}
+
+export const startRecorder = async () => {
+    if (!dotNetClass) {
+        return ".Net not initialized yet!";
+    }
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const audioCtx = new AudioContext({ sampleRate: 3000 });
+    const analyser = new AnalyserNode(audioCtx, { fftSize: 4096 });
+    audioCtx
+        .createMediaStreamSource(stream)
+        .connect(analyser);
+    const bufferSize = analyser.frequencyBinCount;
+    interval = setInterval(() => {
+        const data = new Uint8Array(350);
+        analyser.getByteFrequencyData(data);        
+        draw("canvas1", data, 350);
+        const data2 = new Uint8Array(4096)
+        analyser.getByteTimeDomainData(data2);
+        draw("canvas2", data2, 4096)
+    }, 33)
+}
+
+export const stopRecorder = () => {
+    if (!stream) {
+        return;
+    }
+    clearInterval(interval);
+    const tracks = stream.getTracks();
+    for (const track of tracks) {
+        if (track.readyState == "live") {
+            track.stop();
+        }
+    }    
+}
+
+const draw = (canvasId, values, bufferSize) => {
+    const canvas = document.getElementById(canvasId);
+    const width = canvas.width;
+    const height = canvas.height;
+    const context = canvas.getContext("2d");
+    context.clearRect(0, 0, width, height);
+    const step = width / bufferSize;
+    let x = step;
+    context.beginPath();
+    let value = values[0] / 128.0;
+    let y = (value * height) / 2;
+    context.moveTo(0, y);
+    for (let i = 1; i < bufferSize; i++) {
+        value = values[i] / 128.0;
+        y = (value * height) / 2;
+        context.lineTo(x, y);
+        x += step;
+    }
+    context.stroke();
 }

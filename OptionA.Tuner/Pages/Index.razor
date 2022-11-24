@@ -1,9 +1,11 @@
-﻿@page "/"
-
-<h1>Hello, world!</h1>
-
-<div @onclick="ClickMe">Click me!</div>
-@foreach(var r in _records)
-{
-    <div>@r</div>
-}
+﻿@using OptionA.Tuner.Canvas
+@page "/"
+<div>
+    <button type="button" @onclick="ClickMe">Click me!</button>
+</div>
+<div>
+    <canvas width="500" height="300" id="canvas1" style="border:1px solid #000000;" />
+</div>
+<div>
+    <canvas width="500" height="300" id="canvas2" style="border:1px solid #000000;" />
+</div>

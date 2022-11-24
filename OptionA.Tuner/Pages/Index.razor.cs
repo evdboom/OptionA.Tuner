@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
-using OptionA.Tuner.Decoder.Opus;
-using OptionA.Tuner.Decoder.WebM;
-using System.Runtime.InteropServices.JavaScript;
+﻿using System.Runtime.InteropServices.JavaScript;
 using System.Runtime.Versioning;
 
 namespace OptionA.Tuner.Pages
@@ -9,42 +6,32 @@ namespace OptionA.Tuner.Pages
     [SupportedOSPlatform("browser")]
     public partial class Index
     {
-        private JSObject? _recorder;
+        private static event EventHandler<(double SampleRate, byte[] Frequencies)>? DataReceived;
 
-        private static event EventHandler<byte[]>? OnData;
-
-        [Inject]
-        private IWebMDecoder Decoder { get; set; } = null!;
-
-        [JSImport("getRecorder", "Index")]
-        internal static partial Task<JSObject> GetRecorder();
+        [JSImport("initialize", "Index")]
+        internal static partial Task Initialize();
         [JSImport("startRecorder", "Index")]
-        internal static partial void StartRecorder(JSObject recorder, int timeslice);
+        internal static partial Task StartRecorder();
         [JSImport("stopRecorder", "Index")]
-        internal static partial void StopRecorder(JSObject recorder);
+        internal static partial void StopRecorder();
         [JSExport]
-        internal static void ProcessSlice(byte[] slice)
-        {            
-            OnData?.Invoke(null, slice);
+        internal static void Process(double sampleRate, byte[] slice)
+        {
+            DataReceived?.Invoke(null, (sampleRate, slice));
         }
 
-        private List<string> _records = new();
+        private byte[]? _slice;
 
         private bool _started = false;
-        private void ClickMe()
+        private async Task ClickMe()
         {
-            if (_recorder is null)
-            {
-                return;
-            }
-
             if (_started)
             {
-                StopRecorder(_recorder);
+                StopRecorder();
             }
             else
             {
-                StartRecorder(_recorder, 200);
+                await StartRecorder();
             }
 
             _started = !_started;
@@ -53,20 +40,26 @@ namespace OptionA.Tuner.Pages
         protected override async Task OnInitializedAsync()
         {
             await JSHost.ImportAsync("Index", "../Pages/Index.razor.js");
-            _recorder = await GetRecorder();
-            OnData += OnRecord;
-            Decoder.ReadStepPerformed += GotMessage;
+            await Initialize();
+            DataReceived += OnData;
         }
 
-        private void GotMessage(object? sender, string e)
+        private void OnData(object? sender, (double sampleRate, byte[] frequencies) slice)
         {
-            _records.Add(e);
+            var length = slice.frequencies.Length;
+            var highest = slice.sampleRate / 2;
+
+            var frSlice = highest / length;
+
+            _slice = slice.frequencies;
+                //.Select((s, i) => new FrequencySlice
+                //{
+                //    Value = s,
+                //    FrStart = i * frSlice,
+                //    FrEnd = (i + 1) * frSlice,
+                //})
+                //.ToList();
             StateHasChanged();
-        }
-
-        private void OnRecord(object? sender, byte[] slice)
-        {
-            Decoder.Decode(slice);
         }
     }
 }

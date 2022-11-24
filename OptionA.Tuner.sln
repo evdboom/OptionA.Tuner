@@ -5,7 +5,7 @@ VisualStudioVersion = 17.4.33103.184
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OptionA.Tuner", "OptionA.Tuner\OptionA.Tuner.csproj", "{C91DF353-C19B-477D-B298-72993696388D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OptionA.Tuner.Decoder", "OptionA.Tuner.Decoder\OptionA.Tuner.Decoder.csproj", "{69787A5D-FCF6-44C3-BD15-EFD10F44973C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OptionA.Tuner.Decoder", "OptionA.Tuner.Decoder\OptionA.Tuner.Decoder.csproj", "{69787A5D-FCF6-44C3-BD15-EFD10F44973C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
