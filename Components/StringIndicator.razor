@@ -1,0 +1,43 @@
+@using OptionA.Tuner.Models
+@namespace OptionA.Tuner.Components
+
+<div class="string-indicator">
+    @foreach (var str in Instrument.Strings)
+    {
+        var isClosest = IsActive && CurrentNote is not null
+            && str.NoteName == CurrentNote.Name
+            && str.Octave == CurrentNote.Octave;
+
+        var isTarget = TargetString is not null
+            && str.Name == TargetString.Name;
+
+        <button class="string-button @(isClosest ? "closest" : "") @(isTarget ? "targeted" : "")"
+                @onclick="() => OnStringClicked(str)"
+                title="@str.DisplayName (@str.GetFrequency(ReferenceA4).ToString("F1") Hz)">
+            <span class="string-note">@str.Name</span>
+            <span class="string-octave">@str.Octave</span>
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public InstrumentDefinition Instrument { get; set; } = default!;
+    [Parameter] public NoteInfo? CurrentNote { get; set; }
+    [Parameter] public bool IsActive { get; set; }
+    [Parameter] public double ReferenceA4 { get; set; } = 440.0;
+    [Parameter] public StringDefinition? TargetString { get; set; }
+    [Parameter] public EventCallback<StringDefinition?> TargetStringChanged { get; set; }
+
+    private async Task OnStringClicked(StringDefinition str)
+    {
+        if (TargetString?.Name == str.Name)
+        {
+            // Toggle off
+            await TargetStringChanged.InvokeAsync(null);
+        }
+        else
+        {
+            await TargetStringChanged.InvokeAsync(str);
+        }
+    }
+}

@@ -1,0 +1,44 @@
+@namespace OptionA.Tuner.Components
+
+<div class="note-display @(IsActive ? "active" : "inactive")">
+    @if (IsActive && Note is not null)
+    {
+        <div class="note-name-row">
+            <span class="accidental-indicator left">
+                @if (Note.IsFlat)
+                {
+                    <span class="indicator flat">♭</span>
+                }
+            </span>
+            <span class="note-name">@Note.Name</span>
+            <span class="note-octave">@Note.Octave</span>
+            <span class="accidental-indicator right">
+                @if (Note.IsSharp)
+                {
+                    <span class="indicator sharp">♯</span>
+                }
+                @if (Note.IsInTune)
+                {
+                    <span class="indicator intune">✓</span>
+                }
+            </span>
+        </div>
+        <div class="frequency-display">
+            @Note.DetectedFrequency.ToString("F1") Hz
+        </div>
+    }
+    else
+    {
+        <div class="note-name-row">
+            <span class="note-name muted">—</span>
+        </div>
+        <div class="frequency-display muted">
+            Waiting for signal...
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public OptionA.Tuner.Models.NoteInfo? Note { get; set; }
+    [Parameter] public bool IsActive { get; set; }
+}

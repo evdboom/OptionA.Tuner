@@ -1,0 +1,133 @@
+@namespace OptionA.Tuner.Components
+
+<div class="tuning-gauge @(IsActive ? "active" : "inactive")">
+    <svg viewBox="0 0 300 180" class="gauge-svg">
+        <!-- Background arc -->
+        <defs>
+            <!-- Gradient zones -->
+            <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="var(--color-flat)" />
+                <stop offset="30%" stop-color="var(--color-warning)" />
+                <stop offset="45%" stop-color="var(--color-intune)" />
+                <stop offset="55%" stop-color="var(--color-intune)" />
+                <stop offset="70%" stop-color="var(--color-warning)" />
+                <stop offset="100%" stop-color="var(--color-sharp)" />
+            </linearGradient>
+        </defs>
+
+        <!-- Gauge arc background -->
+        <path d="M 30 160 A 120 120 0 0 1 270 160"
+              fill="none"
+              stroke="var(--gauge-track)"
+              stroke-width="12"
+              stroke-linecap="round" />
+
+        <!-- Colored gauge arc -->
+        <path d="M 30 160 A 120 120 0 0 1 270 160"
+              fill="none"
+              stroke="url(#gaugeGradient)"
+              stroke-width="8"
+              stroke-linecap="round"
+              opacity="0.7" />
+
+        <!-- Tick marks -->
+        @foreach (var tick in _ticks)
+        {
+            <line x1="@tick.X1.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                  y1="@tick.Y1.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                  x2="@tick.X2.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                  y2="@tick.Y2.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                  stroke="var(--text-secondary)"
+                  stroke-width="@(tick.IsMajor ? "2" : "1")"
+                  opacity="@(tick.IsMajor ? "0.8" : "0.4")" />
+        }
+
+        <!-- Tick labels -->
+        <text x="25" y="175" class="gauge-label">-50</text>
+        <text x="150" y="30" class="gauge-label center-label">0</text>
+        <text x="268" y="175" class="gauge-label">+50</text>
+
+        <!-- Center marker -->
+        <line x1="150" y1="35" x2="150" y2="50"
+              stroke="var(--color-intune)"
+              stroke-width="3"
+              stroke-linecap="round" />
+
+        <!-- Needle -->
+        <g transform="rotate(@NeedleAngle.ToString(System.Globalization.CultureInfo.InvariantCulture), 150, 160)"
+           class="needle-group">
+            <line x1="150" y1="160" x2="150" y2="48"
+                  stroke="var(--needle-color)"
+                  stroke-width="3"
+                  stroke-linecap="round" />
+            <circle cx="150" cy="160" r="6" fill="var(--needle-color)" />
+        </g>
+
+        <!-- Center dot -->
+        <circle cx="150" cy="160" r="3" fill="var(--bg-primary)" />
+    </svg>
+
+    <div class="cents-display">
+        @if (IsActive)
+        {
+            <span class="cents-value @CentsColorClass">
+                @(CentsOffset > 0 ? "+" : "")@CentsOffset.ToString("F1") cents
+            </span>
+        }
+        else
+        {
+            <span class="cents-value muted">-- cents</span>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public double CentsOffset { get; set; }
+    [Parameter] public bool IsActive { get; set; }
+
+    private record TickMark(double X1, double Y1, double X2, double Y2, bool IsMajor);
+
+    // Pre-computed ticks
+    private static readonly List<TickMark> _ticks = GenerateTicks();
+
+    // Map cents (-50 to +50) to angle (-90° to +90°)
+    private double NeedleAngle => IsActive ? CentsOffset * 90.0 / 50.0 : 0;
+
+    private string CentsColorClass
+    {
+        get
+        {
+            var abs = Math.Abs(CentsOffset);
+            if (abs <= 5) return "intune";
+            if (abs <= 15) return "warning";
+            return CentsOffset < 0 ? "flat" : "sharp";
+        }
+    }
+
+    private static List<TickMark> GenerateTicks()
+    {
+        var ticks = new List<TickMark>();
+        const double cx = 150, cy = 160, innerR = 108, outerR = 120;
+        const double majorInnerR = 104;
+
+        // Ticks at every 10 cents: -50, -40, ..., 0, ..., 40, 50
+        for (int cents = -50; cents <= 50; cents += 5)
+        {
+            var isMajor = cents % 10 == 0;
+            // Map cents to angle: -50 => -90°, 0 => 0°, 50 => 90°
+            var angleDeg = cents * 90.0 / 50.0 - 90.0; // offset so 0° is up
+            var angleRad = angleDeg * Math.PI / 180.0;
+
+            var r1 = isMajor ? majorInnerR : innerR;
+
+            var x1 = cx + r1 * Math.Cos(angleRad);
+            var y1 = cy + r1 * Math.Sin(angleRad);
+            var x2 = cx + outerR * Math.Cos(angleRad);
+            var y2 = cy + outerR * Math.Sin(angleRad);
+
+            ticks.Add(new TickMark(x1, y1, x2, y2, isMajor));
+        }
+
+        return ticks;
+    }
+}

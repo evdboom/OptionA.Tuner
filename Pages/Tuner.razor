@@ -1,0 +1,211 @@
+@page "/"
+@using OptionA.Tuner.Components
+@using OptionA.Tuner.Models
+@using OptionA.Tuner.Services
+@inject AudioCaptureService AudioCapture
+@implements IDisposable
+
+<div class="tuner-container">
+    <header class="tuner-header">
+        <h1>OptionA Tuner</h1>
+        <div class="controls-row">
+            <div class="control-group">
+                <label>Instrument</label>
+                <select @bind="SelectedInstrumentName" @bind:after="OnInstrumentChanged">
+                    @foreach (var inst in InstrumentDefinition.All)
+                    {
+                        <option value="@inst.Name">@inst.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="control-group">
+                <label>A4 Reference</label>
+                <div class="pitch-selector">
+                    <button class="pitch-btn" @onclick="DecrementPitch" disabled="@(!CanDecrementPitch)">−</button>
+                    <span class="pitch-value">@ReferenceA4 Hz</span>
+                    <button class="pitch-btn" @onclick="IncrementPitch" disabled="@(!CanIncrementPitch)">+</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="tuner-main">
+        @if (!_isSupported)
+        {
+            <div class="error-message">
+                <p>⚠ Your browser does not support microphone access.</p>
+                <p>Please use a modern browser (Chrome, Firefox, Edge, Safari).</p>
+            </div>
+        }
+        else
+        {
+            <NoteDisplay Note="_currentNote" IsActive="_isDetecting" />
+
+            <TuningGauge CentsOffset="@_smoothedCents" IsActive="_isDetecting" />
+
+            <StringIndicator Instrument="_selectedInstrument"
+                             CurrentNote="_currentNote"
+                             IsActive="_isDetecting"
+                             ReferenceA4="ReferenceA4"
+                             TargetString="_targetString"
+                             TargetStringChanged="OnTargetStringChanged" />
+
+            <div class="start-stop">
+                @if (!AudioCapture.IsListening)
+                {
+                    <button class="btn-start" @onclick="StartListening">
+                        <span class="btn-icon">🎵</span>
+                        Start Tuning
+                    </button>
+                }
+                else
+                {
+                    <button class="btn-stop" @onclick="StopListening">
+                        Stop
+                    </button>
+                }
+            </div>
+        }
+    </main>
+
+    <footer class="tuner-footer">
+        <span>No ads. No tracking. Just tuning.</span>
+    </footer>
+</div>
+
+@code {
+    // Settings
+    private int ReferenceA4 { get; set; } = 440;
+    private string SelectedInstrumentName { get; set; } = "Cello";
+    private InstrumentDefinition _selectedInstrument = InstrumentDefinition.Cello;
+    private StringDefinition? _targetString;
+
+    // State
+    private NoteInfo? _currentNote;
+    private bool _isDetecting;
+    private bool _isSupported = true;
+    private double _smoothedCents;
+
+    // Smoothing buffer
+    private readonly Queue<double> _centsHistory = new();
+    private const int SmoothingWindow = 5;
+
+    private bool CanIncrementPitch => ReferenceA4 < 446;
+    private bool CanDecrementPitch => ReferenceA4 > 438;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _isSupported = await AudioCapture.CheckSupportedAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task StartListening()
+    {
+        try
+        {
+            AudioCapture.OnAudioDataReceived += ProcessAudioData;
+            await AudioCapture.StartAsync();
+            _isDetecting = true;
+        }
+        catch
+        {
+            _isDetecting = false;
+            AudioCapture.OnAudioDataReceived -= ProcessAudioData;
+        }
+    }
+
+    private async Task StopListening()
+    {
+        AudioCapture.OnAudioDataReceived -= ProcessAudioData;
+        await AudioCapture.StopAsync();
+        _isDetecting = false;
+        _currentNote = null;
+        _smoothedCents = 0;
+        _centsHistory.Clear();
+    }
+
+    private void ProcessAudioData(float[] buffer)
+    {
+        var frequency = PitchDetector.DetectPitch(buffer, AudioCapture.SampleRate);
+
+        if (frequency.HasValue)
+        {
+            var note = NoteMapper.Map(frequency.Value, ReferenceA4);
+
+            // If we have a target string, only show info when detecting near that string
+            if (_targetString is not null)
+            {
+                var targetMidi = _targetString.MidiNote;
+                // Allow within ±3 semitones of the target string
+                if (Math.Abs(note.MidiNote - targetMidi) > 3)
+                {
+                    // Detected note is too far from the target, show target note with offset
+                    var targetFreq = _targetString.GetFrequency(ReferenceA4);
+                    var centsFromTarget = 1200.0 * Math.Log2(frequency.Value / targetFreq);
+                    if (Math.Abs(centsFromTarget) <= 50)
+                    {
+                        note = note with
+                        {
+                            CentsOffset = centsFromTarget,
+                            Name = _targetString.NoteName,
+                            Octave = _targetString.Octave,
+                            MidiNote = _targetString.MidiNote,
+                            TargetFrequency = targetFreq
+                        };
+                    }
+                    else
+                    {
+                        // Too far away, still show the detected note normally
+                    }
+                }
+            }
+
+            _currentNote = note;
+
+            // Smoothing
+            _centsHistory.Enqueue(note.CentsOffset);
+            while (_centsHistory.Count > SmoothingWindow)
+            {
+                _centsHistory.Dequeue();
+            }
+
+            _smoothedCents = _centsHistory.Average();
+        }
+        else
+        {
+            // No pitch detected — don't immediately clear; keep showing last note briefly
+            // This prevents flickering during brief silences
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnInstrumentChanged()
+    {
+        _selectedInstrument = InstrumentDefinition.All.First(i => i.Name == SelectedInstrumentName);
+        _targetString = null;
+    }
+
+    private void IncrementPitch()
+    {
+        if (CanIncrementPitch) ReferenceA4++;
+    }
+
+    private void DecrementPitch()
+    {
+        if (CanDecrementPitch) ReferenceA4--;
+    }
+
+    private void OnTargetStringChanged(StringDefinition? str)
+    {
+        _targetString = str;
+    }
+
+    public void Dispose()
+    {
+        AudioCapture.OnAudioDataReceived -= ProcessAudioData;
+    }
+}
