@@ -8,6 +8,7 @@
     <base href="/" />
     <link rel="preload" id="webassembly" />
     <link rel="stylesheet" href="css/app.css" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <link href="OptionA.Tuner.styles.css" rel="stylesheet" />
     <script type="importmap"></script>
@@ -15,11 +16,14 @@
 
 <body>
     <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:1.5rem;">
+            <img src="logo.svg" alt="OptionA Tuner" style="width:80px;height:auto;" />
+            <svg class="loading-progress">
+                <circle r="40%" cx="50%" cy="50%" />
+                <circle r="40%" cx="50%" cy="50%" />
+            </svg>
+            <div class="loading-progress-text"></div>
+        </div>
     </div>
 
     <div id="blazor-error-ui">

@@ -73,11 +73,24 @@ h1:focus {
     padding-bottom: 1rem;
 }
 
+.header-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.header-logo {
+    width: 32px;
+    height: auto;
+}
+
 .tuner-header h1 {
     font-size: 1.4rem;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 1rem;
+    margin-bottom: 0;
     letter-spacing: 0.02em;
 }
 
@@ -118,6 +131,163 @@ h1:focus {
 
 .control-group select:focus {
     border-color: var(--color-accent);
+}
+
+/* ============================================
+   Instrument Picker (Searchable Dropdown)
+   ============================================ */
+
+.instrument-picker {
+    position: relative;
+    min-width: 160px;
+}
+
+.instrument-picker-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    outline: none;
+    transition: border-color var(--transition);
+    text-align: left;
+    white-space: nowrap;
+}
+
+.instrument-picker-toggle:hover,
+.instrument-picker.open .instrument-picker-toggle {
+    border-color: var(--color-accent);
+}
+
+.picker-chevron {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    transition: transform var(--transition);
+}
+
+.instrument-picker.open .picker-chevron {
+    transform: rotate(180deg);
+}
+
+.instrument-picker-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 220px;
+    max-height: 320px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.picker-search-wrap {
+    position: relative;
+    padding: 0.4rem;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.picker-search {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.35rem 1.8rem 0.35rem 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color var(--transition);
+}
+
+.picker-search::placeholder {
+    color: var(--text-muted);
+}
+
+.picker-search:focus {
+    border-color: var(--color-accent);
+}
+
+.picker-search-clear {
+    position: absolute;
+    right: 0.6rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    cursor: pointer;
+    padding: 0.2rem;
+    line-height: 1;
+}
+
+.picker-search-clear:hover {
+    color: var(--text-primary);
+}
+
+.picker-options {
+    overflow-y: auto;
+    flex: 1;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
+
+.picker-group {
+    padding-bottom: 0.2rem;
+}
+
+.picker-group-header {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    padding: 0.5rem 0.6rem 0.2rem;
+    position: sticky;
+    top: 0;
+    background: var(--bg-secondary);
+}
+
+.picker-option {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    padding: 0.35rem 0.6rem 0.35rem 1rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background var(--transition);
+}
+
+.picker-option:hover {
+    background: var(--bg-hover);
+}
+
+.picker-option.selected {
+    color: var(--color-accent);
+    font-weight: 600;
+}
+
+.picker-no-results {
+    padding: 1rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.8rem;
 }
 
 /* Pitch Selector */

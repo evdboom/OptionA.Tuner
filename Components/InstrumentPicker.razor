@@ -1,0 +1,96 @@
+@using OptionA.Tuner.Models
+@namespace OptionA.Tuner.Components
+
+<div class="instrument-picker @(_isOpen ? "open" : "")" @onfocusout="OnFocusOut" tabindex="-1">
+    <button class="instrument-picker-toggle" @onclick="Toggle" @onclick:stopPropagation="true">
+        <span class="picker-label">@SelectedName</span>
+        <span class="picker-chevron">▾</span>
+    </button>
+
+    @if (_isOpen)
+    {
+        <div class="instrument-picker-dropdown" @onclick:stopPropagation="true">
+            <div class="picker-search-wrap">
+                <input class="picker-search"
+                       type="text"
+                       placeholder="Search instruments..."
+                       @bind="_searchText"
+                       @bind:event="oninput"
+                       @ref="_searchInput" />
+                @if (!string.IsNullOrEmpty(_searchText))
+                {
+                    <button class="picker-search-clear" @onclick="ClearSearch">✕</button>
+                }
+            </div>
+            <div class="picker-options">
+                @{ var hasResults = false; }
+                @foreach (var group in InstrumentDefinition.Grouped)
+                {
+                    var filtered = group
+                        .Where(i => string.IsNullOrWhiteSpace(_searchText)
+                            || i.Name.Contains(_searchText, StringComparison.OrdinalIgnoreCase)
+                            || i.Category.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+
+                    if (filtered.Count == 0) continue;
+                    hasResults = true;
+
+                    <div class="picker-group">
+                        <div class="picker-group-header">@group.Key</div>
+                        @foreach (var inst in filtered)
+                        {
+                            var isSelected = inst.Name == SelectedName;
+                            <button class="picker-option @(isSelected ? "selected" : "")"
+                                    @onclick="() => Select(inst)">
+                                @inst.Name
+                            </button>
+                        }
+                    </div>
+                }
+                @if (!hasResults)
+                {
+                    <div class="picker-no-results">No instruments found</div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string SelectedName { get; set; } = "";
+    [Parameter] public EventCallback<string> SelectedNameChanged { get; set; }
+
+    private bool _isOpen;
+    private string _searchText = "";
+    private ElementReference _searchInput;
+
+    private void Toggle()
+    {
+        _isOpen = !_isOpen;
+        if (_isOpen)
+        {
+            _searchText = "";
+        }
+    }
+
+    private async Task Select(InstrumentDefinition inst)
+    {
+        _isOpen = false;
+        _searchText = "";
+        await SelectedNameChanged.InvokeAsync(inst.Name);
+    }
+
+    private void ClearSearch()
+    {
+        _searchText = "";
+    }
+
+    private async Task OnFocusOut()
+    {
+        // Small delay to allow click events on children to fire first
+        await Task.Delay(200);
+        _isOpen = false;
+        _searchText = "";
+        StateHasChanged();
+    }
+}

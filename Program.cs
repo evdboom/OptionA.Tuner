@@ -8,5 +8,6 @@ builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddScoped<AudioCaptureService>();
+builder.Services.AddScoped<LocalStorageService>();
 
 await builder.Build().RunAsync();

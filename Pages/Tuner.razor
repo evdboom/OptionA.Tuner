@@ -3,20 +3,20 @@
 @using OptionA.Tuner.Models
 @using OptionA.Tuner.Services
 @inject AudioCaptureService AudioCapture
+@inject LocalStorageService LocalStorage
 @implements IDisposable
 
 <div class="tuner-container">
     <header class="tuner-header">
-        <h1>OptionA Tuner</h1>
+        <div class="header-brand">
+            <img src="logo.svg" alt="OptionA Tuner" class="header-logo" />
+            <h1>OptionA Tuner</h1>
+        </div>
         <div class="controls-row">
             <div class="control-group">
                 <label>Instrument</label>
-                <select @bind="SelectedInstrumentName" @bind:after="OnInstrumentChanged">
-                    @foreach (var inst in InstrumentDefinition.All)
-                    {
-                        <option value="@inst.Name">@inst.Name</option>
-                    }
-                </select>
+                <InstrumentPicker SelectedName="@SelectedInstrumentName"
+                                  SelectedNameChanged="OnInstrumentPickerChanged" />
             </div>
             <div class="control-group">
                 <label>A4 Reference</label>
@@ -97,6 +97,20 @@
     {
         if (firstRender)
         {
+            // Restore saved preferences
+            var savedInstrument = await LocalStorage.GetInstrumentAsync();
+            if (savedInstrument is not null && InstrumentDefinition.All.Any(i => i.Name == savedInstrument))
+            {
+                SelectedInstrumentName = savedInstrument;
+                _selectedInstrument = InstrumentDefinition.All.First(i => i.Name == savedInstrument);
+            }
+
+            var savedPitch = await LocalStorage.GetReferenceA4Async();
+            if (savedPitch is not null && savedPitch >= 438 && savedPitch <= 446)
+            {
+                ReferenceA4 = savedPitch.Value;
+            }
+
             _isSupported = await AudioCapture.CheckSupportedAsync();
             StateHasChanged();
         }
@@ -183,20 +197,35 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private void OnInstrumentChanged()
+    private async Task OnInstrumentChanged()
     {
         _selectedInstrument = InstrumentDefinition.All.First(i => i.Name == SelectedInstrumentName);
         _targetString = null;
+        await LocalStorage.SetInstrumentAsync(SelectedInstrumentName);
     }
 
-    private void IncrementPitch()
+    private async Task OnInstrumentPickerChanged(string name)
     {
-        if (CanIncrementPitch) ReferenceA4++;
+        SelectedInstrumentName = name;
+        await OnInstrumentChanged();
     }
 
-    private void DecrementPitch()
+    private async Task IncrementPitch()
     {
-        if (CanDecrementPitch) ReferenceA4--;
+        if (CanIncrementPitch)
+        {
+            ReferenceA4++;
+            await LocalStorage.SetReferenceA4Async(ReferenceA4);
+        }
+    }
+
+    private async Task DecrementPitch()
+    {
+        if (CanDecrementPitch)
+        {
+            ReferenceA4--;
+            await LocalStorage.SetReferenceA4Async(ReferenceA4);
+        }
     }
 
     private void OnTargetStringChanged(StringDefinition? str)
