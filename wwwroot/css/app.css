@@ -515,30 +515,15 @@ h1:focus {
     border-radius: var(--radius);
     background: var(--bg-card);
     color: var(--text-secondary);
-    cursor: pointer;
+    cursor: default;
     transition: all var(--transition);
     position: relative;
-}
-
-.string-button:hover {
-    border-color: var(--color-accent);
-    background: var(--bg-hover);
 }
 
 .string-button.closest {
     border-color: var(--color-intune);
     background: rgba(78, 205, 196, 0.1);
     color: var(--color-intune);
-}
-
-.string-button.targeted {
-    border-color: var(--color-accent);
-    background: rgba(102, 126, 234, 0.15);
-    box-shadow: 0 0 12px rgba(102, 126, 234, 0.3);
-}
-
-.string-button.targeted.closest {
-    border-color: var(--color-intune);
     box-shadow: 0 0 12px rgba(78, 205, 196, 0.3);
 }
 

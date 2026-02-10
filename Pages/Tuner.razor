@@ -46,9 +46,7 @@
             <StringIndicator Instrument="_selectedInstrument"
                              CurrentNote="_currentNote"
                              IsActive="_isDetecting"
-                             ReferenceA4="ReferenceA4"
-                             TargetString="_targetString"
-                             TargetStringChanged="OnTargetStringChanged" />
+                             ReferenceA4="ReferenceA4" />
 
             <div class="start-stop">
                 @if (!AudioCapture.IsListening)
@@ -78,7 +76,6 @@
     private int ReferenceA4 { get; set; } = 440;
     private string SelectedInstrumentName { get; set; } = "Cello";
     private InstrumentDefinition _selectedInstrument = InstrumentDefinition.Cello;
-    private StringDefinition? _targetString;
 
     // State
     private NoteInfo? _currentNote;
@@ -149,34 +146,6 @@
         {
             var note = NoteMapper.Map(frequency.Value, ReferenceA4);
 
-            // If we have a target string, only show info when detecting near that string
-            if (_targetString is not null)
-            {
-                var targetMidi = _targetString.MidiNote;
-                // Allow within ±3 semitones of the target string
-                if (Math.Abs(note.MidiNote - targetMidi) > 3)
-                {
-                    // Detected note is too far from the target, show target note with offset
-                    var targetFreq = _targetString.GetFrequency(ReferenceA4);
-                    var centsFromTarget = 1200.0 * Math.Log2(frequency.Value / targetFreq);
-                    if (Math.Abs(centsFromTarget) <= 50)
-                    {
-                        note = note with
-                        {
-                            CentsOffset = centsFromTarget,
-                            Name = _targetString.NoteName,
-                            Octave = _targetString.Octave,
-                            MidiNote = _targetString.MidiNote,
-                            TargetFrequency = targetFreq
-                        };
-                    }
-                    else
-                    {
-                        // Too far away, still show the detected note normally
-                    }
-                }
-            }
-
             _currentNote = note;
 
             // Smoothing
@@ -200,7 +169,6 @@
     private async Task OnInstrumentChanged()
     {
         _selectedInstrument = InstrumentDefinition.All.First(i => i.Name == SelectedInstrumentName);
-        _targetString = null;
         await LocalStorage.SetInstrumentAsync(SelectedInstrumentName);
     }
 
@@ -226,11 +194,6 @@
             ReferenceA4--;
             await LocalStorage.SetReferenceA4Async(ReferenceA4);
         }
-    }
-
-    private void OnTargetStringChanged(StringDefinition? str)
-    {
-        _targetString = str;
     }
 
     public void Dispose()

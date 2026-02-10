@@ -16,6 +16,8 @@
                        placeholder="Search instruments..."
                        @bind="_searchText"
                        @bind:event="oninput"
+                       @onfocus="OnSearchInputFocus"
+                       @onkeydown="OnSearchKeyDown"
                        @ref="_searchInput" />
                 @if (!string.IsNullOrEmpty(_searchText))
                 {
@@ -63,6 +65,7 @@
     private bool _isOpen;
     private string _searchText = "";
     private ElementReference _searchInput;
+    private bool _suppressNextFocusOut;
 
     private void Toggle()
     {
@@ -70,6 +73,22 @@
         if (_isOpen)
         {
             _searchText = "";
+            _suppressNextFocusOut = true;
+        }
+    }
+
+    private void OnSearchInputFocus()
+    {
+        _suppressNextFocusOut = true;
+    }
+
+    private async Task OnSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            _isOpen = false;
+            _searchText = "";
+            StateHasChanged();
         }
     }
 
@@ -87,6 +106,12 @@
 
     private async Task OnFocusOut()
     {
+        if (_suppressNextFocusOut)
+        {
+            _suppressNextFocusOut = false;
+            return;
+        }
+
         // Small delay to allow click events on children to fire first
         await Task.Delay(200);
         _isOpen = false;
