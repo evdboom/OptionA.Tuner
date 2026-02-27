@@ -1,6 +1,6 @@
 // OptionA Tuner — Service Worker for offline PWA support
 // Version is updated on each deploy to bust the cache
-const CACHE_VERSION = 'optiona-tuner-v2';
+const CACHE_VERSION = 'optiona-tuner-v3';
 
 // Resources to pre-cache on install
 const PRECACHE_URLS = [
@@ -10,7 +10,8 @@ const PRECACHE_URLS = [
     '/favicon.svg',
     '/logo.svg',
     '/manifest.webmanifest',
-    '/js/audioInterop.js'
+    '/js/audioInterop.js',
+    '/js/pitchProcessor.js'
 ];
 
 // Install: pre-cache shell resources
