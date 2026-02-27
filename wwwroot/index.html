@@ -22,11 +22,19 @@
 
 <body>
     <div id="app">
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:1.5rem;">
-            <img src="logo.svg" alt="OptionA Tuner" style="width:80px;height:auto;" />
-            <svg class="loading-progress">
-                <circle r="40%" cx="50%" cy="50%" />
-                <circle r="40%" cx="50%" cy="50%" />
+        <div class="loading-progress-wrap">
+            <svg class="loading-progress" viewBox="0 0 235 250" xmlns="http://www.w3.org/2000/svg" aria-label="Loading OptionA Tuner">
+                <mask id="a-mask">
+                    <rect x="0" y="0" width="100%" height="100%" fill="white" />
+                    <path fill="black" d="M 86 143 L 112 46 C 113 42, 113 41, 115 41 L 120 41 C 122 41, 122 42, 123 46 L 149 143 Z" />
+                </mask>
+                <mask id="fill-mask">
+                    <rect x="0" y="0" width="100%" height="100%" fill="white" />
+                    <rect id="fill-rect" x="0" y="0" width="100%" height="100%" fill="black" />
+                    <path fill="black" d="M 86 143 L 112 46 C 113 42, 113 41, 115 41 L 120 41 C 122 41, 122 42, 123 46 L 149 143 Z" />
+                </mask>
+                <path id="a-outline" mask="url(#a-mask)" d="M 53 250 L 2 250 C 0 250, 1 248, 2 245 L 72 20 C 75 10, 76 0, 95 0 L 140 0 C 159 0, 160 10, 163 20 L 233 245 C 234 248, 235 250, 233 250 L 182 250 C 180 250, 179 248, 178 245 L 161 184 L 74 184 L 57 245 C 56 248, 55 250, 53 250 Z" />
+                <path id="a-fill" mask="url(#fill-mask)" d="M 53 250 L 2 250 C 0 250, 1 248, 2 245 L 72 20 C 75 10, 76 0, 95 0 L 140 0 C 159 0, 160 10, 163 20 L 233 245 C 234 248, 235 250, 233 250 L 182 250 C 180 250, 179 248, 178 245 L 161 184 L 74 184 L 57 245 C 56 248, 55 250, 53 250 Z" />
             </svg>
             <div class="loading-progress-text"></div>
         </div>
