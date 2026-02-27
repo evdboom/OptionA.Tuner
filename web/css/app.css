@@ -1,0 +1,43 @@
+/* ============================================
+   OptionA Tuner — Dark Theme Stylesheet (Lit version)
+   Global custom properties only — component styles are scoped via Shadow DOM.
+   ============================================ */
+
+:root {
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-card: #1e2a45;
+    --bg-hover: #2a3a5c;
+    --text-primary: #e0e0e0;
+    --text-secondary: #8892a8;
+    --text-muted: #5a6478;
+    --color-intune: #4ecdc4;
+    --color-warning: #f7b731;
+    --color-flat: #e74c3c;
+    --color-sharp: #e74c3c;
+    --color-accent: #667eea;
+    --color-accent-hover: #764ba2;
+    --gauge-track: #2a3a5c;
+    --needle-color: #ffffff;
+    --border-color: #2a3a5c;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --transition: 0.2s ease;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+}

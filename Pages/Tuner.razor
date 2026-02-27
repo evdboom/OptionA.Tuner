@@ -138,6 +138,11 @@
         _centsHistory.Clear();
     }
 
+    // Track previous render values to skip needless Blazor diffs
+    private string? _lastRenderedNote;
+    private int _lastRenderedOctave;
+    private int _lastRenderedCentsRounded;
+
     private void ProcessAudioData(float[] buffer)
     {
         var frequency = PitchDetector.DetectPitch(buffer, AudioCapture.SampleRate);
@@ -163,7 +168,17 @@
             // This prevents flickering during brief silences
         }
 
-        InvokeAsync(StateHasChanged);
+        // Only re-render when the displayed values actually changed
+        var currentCentsRounded = (int)Math.Round(_smoothedCents);
+        if (_currentNote?.Name != _lastRenderedNote
+            || _currentNote?.Octave != _lastRenderedOctave
+            || currentCentsRounded != _lastRenderedCentsRounded)
+        {
+            _lastRenderedNote = _currentNote?.Name;
+            _lastRenderedOctave = _currentNote?.Octave ?? 0;
+            _lastRenderedCentsRounded = currentCentsRounded;
+            InvokeAsync(StateHasChanged);
+        }
     }
 
     private async Task OnInstrumentChanged()

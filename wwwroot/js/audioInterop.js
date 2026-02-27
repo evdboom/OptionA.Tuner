@@ -1,9 +1,19 @@
 let audioContext = null;
 let analyser = null;
 let mediaStream = null;
-let animationFrameId = null;
+let timerId = null;
+let workletNode = null;
 let dotNetHelper = null;
 let isRunning = false;
+
+// ~30 fps throttle interval (used by AnalyserNode fallback only)
+const TICK_INTERVAL_MS = 33;
+
+function sendBuffer(floatBuffer) {
+    if (!dotNetHelper) return;
+    const bytes = new Uint8Array(floatBuffer.buffer);
+    dotNetHelper.invokeMethodAsync('ReceiveAudioData', bytes);
+}
 
 export async function startMicrophone(objRef) {
     dotNetHelper = objRef;
@@ -19,19 +29,43 @@ export async function startMicrophone(objRef) {
 
         audioContext = new AudioContext();
 
-        // Resume context if suspended (browser autoplay policy)
         if (audioContext.state === 'suspended') {
             await audioContext.resume();
         }
 
         const source = audioContext.createMediaStreamSource(mediaStream);
-        analyser = audioContext.createAnalyser();
-        analyser.fftSize = 4096;
-        analyser.smoothingTimeConstant = 0;
-        source.connect(analyser);
+
+        // Prefer AudioWorklet (off main thread) with AnalyserNode fallback
+        let useWorklet = false;
+        if (audioContext.audioWorklet) {
+            try {
+                await audioContext.audioWorklet.addModule('js/pitchProcessor.js');
+                useWorklet = true;
+            } catch (e) {
+                console.warn('AudioWorklet unavailable, falling back to AnalyserNode:', e);
+            }
+        }
+
+        if (useWorklet) {
+            workletNode = new AudioWorkletNode(audioContext, 'pitch-processor');
+            source.connect(workletNode);
+            workletNode.port.onmessage = (e) => {
+                if (!isRunning) return;
+                sendBuffer(e.data);
+            };
+        } else {
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 4096;
+            analyser.smoothingTimeConstant = 0;
+            source.connect(analyser);
+        }
 
         isRunning = true;
-        tick();
+
+        // Only start the polling loop for the fallback path
+        if (!useWorklet) {
+            tick();
+        }
 
         return audioContext.sampleRate;
     } catch (err) {
@@ -45,19 +79,23 @@ function tick() {
 
     const buffer = new Float32Array(analyser.fftSize);
     analyser.getFloatTimeDomainData(buffer);
+    sendBuffer(buffer);
 
-    // Convert to regular array for JS interop
-    dotNetHelper.invokeMethodAsync('ReceiveAudioData', Array.from(buffer));
-
-    animationFrameId = requestAnimationFrame(tick);
+    timerId = setTimeout(tick, TICK_INTERVAL_MS);
 }
 
 export function stopMicrophone() {
     isRunning = false;
 
-    if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
+    if (timerId) {
+        clearTimeout(timerId);
+        timerId = null;
+    }
+
+    if (workletNode) {
+        workletNode.port.onmessage = null;
+        workletNode.disconnect();
+        workletNode = null;
     }
 
     if (mediaStream) {
@@ -75,5 +113,5 @@ export function stopMicrophone() {
 }
 
 export function isSupported() {
-    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    return !!navigator.mediaDevices?.getUserMedia;
 }

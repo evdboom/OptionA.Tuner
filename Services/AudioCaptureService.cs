@@ -72,8 +72,14 @@ public sealed class AudioCaptureService : IAsyncDisposable
     }
 
     [JSInvokable]
-    public void ReceiveAudioData(float[] buffer)
+    public void ReceiveAudioData(byte[] bytes)
     {
+        // Reconstruct float[] from the raw byte buffer sent by JS.
+        // JS sends the backing ArrayBuffer of the Float32Array as a Uint8Array,
+        // which Blazor transfers via its optimised byte[] fast path (no JSON).
+        var floatCount = bytes.Length / sizeof(float);
+        var buffer = new float[floatCount];
+        Buffer.BlockCopy(bytes, 0, buffer, 0, bytes.Length);
         OnAudioDataReceived?.Invoke(buffer);
     }
 
