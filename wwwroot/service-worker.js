@@ -1,6 +1,6 @@
 // OptionA Tuner — Service Worker for offline PWA support
 // Version is updated on each deploy to bust the cache
-const CACHE_VERSION = 'optiona-tuner-v4';
+const CACHE_VERSION = 'optiona-tuner-v5';
 
 // Resources to pre-cache on install
 const PRECACHE_URLS = [
